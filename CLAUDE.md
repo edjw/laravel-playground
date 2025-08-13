@@ -135,7 +135,7 @@ Route::get('/users', function () {
 
 ### Vite Error
 
-- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `npm run build` or ask the user to run `npm run dev` or `composer run dev`.
+- If you receive an "Illuminate\Foundation\ViteException: Unable to locate file in Vite manifest" error, you can run `pnpm build` or ask the user to run `pnpm dev` or `composer run dev`.
 
 === laravel/v12 rules ===
 
