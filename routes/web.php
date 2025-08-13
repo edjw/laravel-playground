@@ -1,15 +1,26 @@
 <?php
 
+declare(strict_types=1);
+
+use App\Http\Controllers\PlaygroundController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::redirect('/', '/playground')->middleware('auth');
 
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function (): void {
+    // Playground routes with names for Wayfinder
+    Route::get('/playground', [PlaygroundController::class, 'index'])
+        ->name('playground.index');
+
+    Route::get('/playground/tools/{tool:slug}', [PlaygroundController::class, 'show'])
+        ->name('playground.show');
+
+    Route::put('/playground/tools/{tool}', [PlaygroundController::class, 'update'])
+        ->name('playground.update');
+
+    Route::post('/playground/tools/{tool}/execute', [PlaygroundController::class, 'execute'])
+        ->name('playground.execute');
+});
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
