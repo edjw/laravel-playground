@@ -35,4 +35,48 @@ export interface User {
     updated_at: string;
 }
 
+export interface PlaygroundTool {
+    id: number;
+    name: string;
+    slug: string;
+    description: string | null;
+    icon: string;
+    component_name: string;
+    configuration: Record<string, any> | null;
+    saved_data: Record<string, any> | null;
+    is_active: boolean;
+    user_id: number | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WordCounterStats {
+    words: number;
+    characters: number;
+    characters_no_spaces: number;
+    lines: number;
+    paragraphs: number;
+}
+
+export interface JsonFormatterResult {
+    formatted?: string;
+    minified?: string;
+    valid: boolean;
+    size_original?: number;
+    size_formatted?: number;
+    size_minified?: number;
+    error?: string;
+}
+
+export interface ColorPaletteResult {
+    palette: {
+        primary: string;
+        lighter: string;
+        darker: string;
+        complement: string;
+        triad1: string;
+        triad2: string;
+    };
+}
+
 export type BreadcrumbItemType = BreadcrumbItem;
