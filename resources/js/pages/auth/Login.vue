@@ -94,24 +94,22 @@ const submit = () => {
 
         <!-- Development Login Links -->
         <div v-if="page.props.environment === 'local'" class="mt-8 rounded-lg border border-dashed border-muted-foreground/25 p-4">
-            <div class="flex items-center gap-2 mb-3 text-sm font-medium text-muted-foreground">
+            <div class="mb-3 flex items-center gap-2 text-sm font-medium text-muted-foreground">
                 <Zap class="h-4 w-4" />
                 Quick Development Login
             </div>
             <div class="space-y-2">
                 <form method="post" action="/laravel-login-link-login" class="w-full">
-                    <input type="hidden" name="_token" :value="page.props.csrf_token">
-                    <input type="hidden" name="email" value="admin@example.com">
+                    <input type="hidden" name="_token" :value="page.props.csrf_token" />
+                    <input type="hidden" name="email" value="admin@example.com" />
                     <Button type="submit" variant="outline" size="sm" class="w-full justify-start text-xs">
                         Login as Admin (admin@example.com)
                     </Button>
                 </form>
                 <form method="post" action="/laravel-login-link-login" class="w-full">
-                    <input type="hidden" name="_token" :value="page.props.csrf_token">
-                    <input type="hidden" name="email" value="user@example.com">
-                    <Button type="submit" variant="outline" size="sm" class="w-full justify-start text-xs">
-                        Login as User (user@example.com)
-                    </Button>
+                    <input type="hidden" name="_token" :value="page.props.csrf_token" />
+                    <input type="hidden" name="email" value="user@example.com" />
+                    <Button type="submit" variant="outline" size="sm" class="w-full justify-start text-xs"> Login as User (user@example.com) </Button>
                 </form>
             </div>
         </div>

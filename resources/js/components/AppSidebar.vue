@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import NavUser from '@/components/NavUser.vue';
-import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+} from '@/components/ui/sidebar';
 import { type PlaygroundTool } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Beaker, Braces, Palette, Type } from 'lucide-vue-next';
-import AppLogo from './AppLogo.vue';
 import { computed } from 'vue';
+import AppLogo from './AppLogo.vue';
 
 const page = usePage();
 
