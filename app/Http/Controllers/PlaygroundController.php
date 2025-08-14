@@ -74,6 +74,4 @@ final class PlaygroundController extends Controller
 
         // No tools currently implemented
         return response()->json(['error' => 'Tool not implemented']);
-    }
-
-}
+    }}

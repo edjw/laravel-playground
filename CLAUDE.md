@@ -408,4 +408,54 @@ In Tailwind v4 with Vue, **avoid** `<style scoped>` blocks with `@apply` directi
 - Every change must be programmatically tested. Write a new test or update an existing test, then run the affected tests to make sure they pass.
 - Run the minimum number of tests needed to ensure code quality and speed. Use `php artisan test` with a specific filename or filter.
 
+=== playground tools rules ===
+
+## Managing Playground Tools
+
+### Adding a New Tool
+
+**Use the artisan command for easy tool creation:**
+
+```bash
+php artisan make:playground-tool "Tool Name" --icon=Wrench --description="Brief description"
+```
+
+This command will:
+1. **Create the Vue component** with full template including save/load functionality
+2. **Create database entry** for the tool
+3. **Update the seeder** for deployment consistency
+4. **Optionally add controller method** for server-side processing
+5. **Provide the route information** you need to add if using server-side processing
+
+**Manual steps (if not using the command):**
+1. Create the tool record in `PlaygroundToolSeeder` 
+2. Create Vue component in `resources/js/pages/Playground/Tools/` (must match `component_name` field)
+3. Add controller logic in `PlaygroundController::execute()` method if needed
+4. Test the tool and write feature tests
+5. Deploy - push changes and migrations will run automatically
+
+### Removing Tools
+
+**Use the artisan command for safe tool removal:**
+
+```bash
+php artisan remove:playground-tool tool-slug
+```
+
+This command will:
+1. **Create migration** to remove tool from all databases (local and deployed)
+2. **Clean up seeder** to prevent recreation
+3. **Remove controller logic** if it exists
+4. **Optionally remove Vue component** file
+5. **Provide deployment instructions**
+
+**NEVER just delete from seeder - this leaves tools in deployed databases.**
+
+### Tool Structure
+
+- **Database**: `PlaygroundTool` model with slug, name, description, icon, component_name
+- **Frontend**: Vue component in `resources/js/pages/Playground/Tools/[ComponentName].vue`
+- **Backend**: Optional logic in `PlaygroundController` methods
+- **Routes**: Handled automatically by `PlaygroundController` using route model binding
+
 </laravel-boost-guidelines>
