@@ -15,18 +15,7 @@ class PlaygroundToolSeeder extends Seeder
      */
     public function run(): void
     {
-        // Get or create an admin user for the playground tools
-        $adminUser = User::firstOrCreate(
-            ['email' => 'admin@example.com'],
-            [
-                'name' => 'Playground Admin',
-                'email' => 'admin@example.com',
-                'email_verified_at' => now(),
-                'password' => bcrypt('password'),
-            ]
-        );
-
-        // Playground tools will be added here automatically when created
+        // Create system tools (no user ownership needed)
 
         // Create the Todo List tool
         PlaygroundTool::firstOrCreate(
@@ -38,9 +27,8 @@ class PlaygroundToolSeeder extends Seeder
                 'icon' => 'CheckSquare',
                 'component_name' => 'TodoList',
                 'configuration' => [],
-                'saved_data' => [],
                 'is_active' => true,
-                'user_id' => $adminUser->id,
+                'user_id' => null, // System tool
             ]
         );
 
@@ -54,9 +42,23 @@ class PlaygroundToolSeeder extends Seeder
                 'icon' => 'Calculator',
                 'component_name' => 'Calculator',
                 'configuration' => [],
-                'saved_data' => [],
                 'is_active' => true,
-                'user_id' => $adminUser->id,
+                'user_id' => null, // System tool
+            ]
+        );
+
+        // Create the Text Transformer tool
+        PlaygroundTool::firstOrCreate(
+            ['slug' => 'text-transformer'],
+            [
+                'name' => 'Text Transformer',
+                'slug' => 'text-transformer',
+                'description' => 'Transform text with various operations',
+                'icon' => 'Type',
+                'component_name' => 'TextTransformer',
+                'configuration' => [],
+                'is_active' => true,
+                'user_id' => null, // System tool
             ]
         );
     }

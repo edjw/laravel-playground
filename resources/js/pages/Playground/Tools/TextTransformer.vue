@@ -1,133 +1,13 @@
-<?php
-
-declare(strict_types=1);
-
-namespace App\Console\Commands;
-
-use App\Models\PlaygroundTool;
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-
-use function Laravel\Prompts\confirm;
-use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
-
-class MakePlaygroundTool extends Command
-{
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
-    protected $signature = 'make:playground-tool 
-                            {name? : The name of the playground tool}
-                            {--icon= : Icon name from Lucide}
-                            {--description= : Tool description}';
-
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Create a new playground tool with Vue component and database entry';
-
-    /**
-     * Execute the console command.
-     */
-    public function handle(): int
-    {
-        // Get tool details
-        $name = $this->argument('name') ?? text(
-            label: 'What is the name of your playground tool?',
-            placeholder: 'e.g. QR Code Generator',
-            required: true
-        );
-
-        $slug = str($name)->slug()->toString();
-        $componentName = str($name)->studly()->toString();
-
-        $description = $this->option('description') ?? text(
-            label: 'Description (optional)',
-            placeholder: 'Brief description of what this tool does'
-        );
-
-        $icon = $this->option('icon') ?? select(
-            label: 'Choose an icon',
-            options: [
-                'Beaker' => 'Beaker (chemistry/experiments)',
-                'Wrench' => 'Wrench (tools/utilities)',
-                'Code' => 'Code (programming)',
-                'Zap' => 'Zap (fast/powerful)',
-                'Terminal' => 'Terminal (CLI tools)',
-                'Settings' => 'Settings (configuration)',
-                'FileText' => 'FileText (text processing)',
-                'Image' => 'Image (image tools)',
-                'Calculator' => 'Calculator (math tools)',
-                'Globe' => 'Globe (web tools)',
-            ],
-            default: 'Beaker'
-        );
-
-        // Check if tool already exists
-        if (PlaygroundTool::where('slug', $slug)->exists()) {
-            $this->error("A playground tool with slug '{$slug}' already exists!");
-
-            return self::FAILURE;
-        }
-
-        // Check if Vue component already exists
-        $componentPath = resource_path("js/pages/Playground/Tools/{$componentName}.vue");
-        if (File::exists($componentPath)) {
-            $this->error("Vue component '{$componentName}.vue' already exists!");
-
-            return self::FAILURE;
-        }
-
-        // Create Vue component
-        $this->createVueComponent($componentName, $name, $slug);
-
-        // Create database entry
-        $this->createDatabaseEntry($name, $slug, $componentName, $description, $icon);
-
-        // Ask to update controller
-        $addedController = false;
-        if (confirm('Would you like to add a server-side execution method to the controller? (Choose "no" for client-side processing)')) {
-            $this->updateController($slug, $componentName);
-            $addedController = true;
-        }
-
-        // Update seeder for deployment
-        $this->updateSeeder($name, $slug, $componentName, $description, $icon);
-
-        $this->info('Playground tool created successfully!');
-        $this->line("• Vue component: {$componentPath}");
-        $this->line("• Database entry created for: {$name}");
-        $this->line("• Seeder updated for deployment");
-        $this->line("• URL: /playground/tools/{$slug}");
-        
-        if ($addedController) {
-            $this->line("");
-            $this->line("<comment>Note: For server-side processing, you'll need to add this route to web.php:</comment>");
-            $this->line("<info>Route::post('/playground/tools/{$slug}/process', [PlaygroundController::class, 'process{$componentName}'])->name('playground.process.{$slug}');</info>");
-        }
-
-        return self::SUCCESS;
-    }
-
-    private function createVueComponent(string $componentName, string $name, string $slug): void
-    {
-        $stub = <<<'VUE'
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { update, execute } from '@/actions/App/Http/Controllers/PlaygroundController';
+import { update } from '@/actions/App/Http/Controllers/PlaygroundController';
 import type { PlaygroundTool, BreadcrumbItem } from '@/types';
 
 interface Props {
     tool: PlaygroundTool;
     savedData?: ToolResult[];
-    processResult?: any; // Result from server-side processing
 }
 
 interface ToolResult {
@@ -160,11 +40,6 @@ onMounted(() => {
     if (props.savedData && Array.isArray(props.savedData)) {
         savedResults.value = props.savedData;
     }
-    
-    // Check for server-side processing result
-    if (props.processResult) {
-        output.value = props.processResult;
-    }
 });
 
 // Save results when they change
@@ -187,14 +62,15 @@ watch(
     { deep: true }
 );
 
-// Process input - choose client-side OR server-side processing
-const processTool = async () => {
+// Process input (client-side logic - modify this for your tool)
+const processTool = () => {
     if (!input.value.trim()) return;
     
     isProcessing.value = true;
     
     try {
-        // OPTION 1: Client-side processing (recommended for simple operations)
+        // TODO: Implement your tool logic here (client-side)
+        // Example: word count
         const result = {
             inputLength: input.value.length,
             wordCount: input.value.trim().split(/\s+/).length,
@@ -203,24 +79,6 @@ const processTool = async () => {
         };
         
         output.value = result;
-        
-        // OPTION 2: Server-side processing (uncomment if you added controller method and route)
-        // Pure Inertia approach - server redirects back with result
-        // router.post(`/playground/tools/${props.tool.slug}/process`, {
-        //     input: input.value,
-        // }, {
-        //     preserveState: true,
-        //     onSuccess: (page) => {
-        //         // Server redirects back with result in page props
-        //         if (page.props.processResult) {
-        //             output.value = page.props.processResult;
-        //         }
-        //     },
-        //     onError: () => {
-        //         output.value = { error: 'Processing failed' };
-        //     }
-        // });
-        
     } catch (error) {
         output.value = { 
             error: 'An error occurred while processing your input.' 
@@ -448,108 +306,3 @@ const stats = computed(() => ({
         </div>
     </AppLayout>
 </template>
-VUE;
-
-        $componentPath = resource_path("js/pages/Playground/Tools/{$componentName}.vue");
-        File::put($componentPath, $stub);
-
-        $this->info("Created Vue component: {$componentPath}");
-    }
-
-    private function createDatabaseEntry(string $name, string $slug, string $componentName, ?string $description, string $icon): void
-    {
-        PlaygroundTool::create([
-            'name' => $name,
-            'slug' => $slug,
-            'description' => $description,
-            'icon' => $icon,
-            'component_name' => $componentName,
-            'configuration' => [],
-            'is_active' => true,
-            'user_id' => null, // System tool
-        ]);
-
-        $this->info("Created database entry for: {$name}");
-    }
-
-    private function updateController(string $slug, string $componentName): void
-    {
-        $controllerPath = app_path('Http/Controllers/PlaygroundController.php');
-        $content = File::get($controllerPath);
-
-        // Check if the case already exists
-        if (strpos($content, "'{$slug}' =>") !== false) {
-            $this->info('Controller case already exists, skipping...');
-            return;
-        }
-
-        // Add case to match statement - be more specific about the match
-        $newCase = "            '{$slug}' => \$this->execute".$componentName.'($request),';
-
-        // Find the exact match statement and add our case before default
-        $pattern = '/(\$result = match \(\$tool->slug\) \{[^}]*?)(            default => \[\'error\' => \'Tool not implemented\'\],)/s';
-        
-        if (preg_match($pattern, $content)) {
-            $content = preg_replace(
-                $pattern,
-                "$1$newCase\n$2",
-                $content
-            );
-        }
-
-        // Check if the method already exists
-        if (strpos($content, "execute{$componentName}(") !== false) {
-            $this->info('Controller method already exists, skipping...');
-            File::put($controllerPath, $content); // Still save the case update
-            return;
-        }
-
-        // Add method before the last closing brace of the class - pure Inertia approach
-        $newMethod = "\n    public function process{$componentName}(Request \$request, PlaygroundTool \$tool)\n    {\n        // Ensure tool is active\n        if (!\$tool->is_active) {\n            abort(404);\n        }\n        \n        \$input = \$request->input('input', '');\n        \n        try {\n            // TODO: Implement your server-side tool logic here\n            // Example processing\n            \$processed = strtoupper(\$input); // Replace with your logic\n            \n            \$result = [\n                'input' => \$input,\n                'processed' => \$processed,\n                'message' => 'Processing completed successfully',\n                'timestamp' => now()->toISOString(),\n            ];\n            \n            // Pure Inertia: redirect back to tool page with result as prop\n            return redirect()->route('playground.show', \$tool)\n                ->with('processResult', \$result);\n                \n        } catch (Exception \$e) {\n            \$errorResult = [\n                'error' => 'Processing failed: ' . \$e->getMessage(),\n                'input' => \$input,\n            ];\n            \n            return redirect()->route('playground.show', \$tool)\n                ->with('processResult', \$errorResult);\n        }\n    }";
-
-        // Find the position of the last closing brace and insert before it
-        $lastBracePos = strrpos($content, '}');
-        if ($lastBracePos !== false) {
-            $content = substr_replace($content, $newMethod . "\n}", $lastBracePos, 1);
-        }
-
-        File::put($controllerPath, $content);
-
-        $this->info('Added placeholder method to PlaygroundController');
-    }
-
-    private function updateSeeder(string $name, string $slug, string $componentName, ?string $description, string $icon): void
-    {
-        $seederPath = database_path('seeders/PlaygroundToolSeeder.php');
-        $content = File::get($seederPath);
-
-        $newToolEntry = <<<PHP
-
-        // Create the {$name} tool
-        PlaygroundTool::firstOrCreate(
-            ['slug' => '{$slug}'],
-            [
-                'name' => '{$name}',
-                'slug' => '{$slug}',
-                'description' => '{$description}',
-                'icon' => '{$icon}',
-                'component_name' => '{$componentName}',
-                'configuration' => [],
-                'is_active' => true,
-                'user_id' => null, // System tool
-            ]
-        );
-PHP;
-
-        // Insert the new tool before the closing brace and curly brace of the run method
-        $content = str_replace(
-            '    }' . "\n" . '}',
-            $newToolEntry . "\n" . '    }' . "\n" . '}',
-            $content
-        );
-
-        File::put($seederPath, $content);
-
-        $this->info('Updated PlaygroundToolSeeder for deployment');
-    }
-}

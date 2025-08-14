@@ -7,6 +7,7 @@ import type { PlaygroundTool, BreadcrumbItem } from '@/types';
 
 interface Props {
     tool: PlaygroundTool;
+    savedData?: Todo[];
 }
 
 interface Todo {
@@ -99,9 +100,9 @@ const categories = computed(() => {
 
 // Load saved data on mount
 onMounted(async () => {
-    if (props.tool.saved_data && Array.isArray(props.tool.saved_data)) {
+    if (props.savedData && Array.isArray(props.savedData)) {
         todoState.value = {
-            todos: props.tool.saved_data,
+            todos: props.savedData,
             filter: 'all',
             sortBy: 'created'
         };
@@ -119,7 +120,7 @@ watch(
                 data: { saved_data: newTodos },
                 preserveState: true,
                 preserveScroll: true,
-                only: ['tool'],
+                only: ['savedData'],
             });
         } catch (error) {
             console.error('Failed to save todos:', error);

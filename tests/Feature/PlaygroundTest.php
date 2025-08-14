@@ -45,8 +45,8 @@ test('playground index displays active tools', function () {
 test('authenticated users can view individual playground tools', function () {
     $user = User::factory()->create();
     $tool = PlaygroundTool::factory()->active()->create([
-        'slug' => 'word-counter',
-        'component_name' => 'WordCounter'
+        'slug' => 'calculator',
+        'component_name' => 'Calculator'
     ]);
     
     $this->actingAs($user);
@@ -54,11 +54,12 @@ test('authenticated users can view individual playground tools', function () {
     $response = $this->get("/playground/tools/{$tool->slug}");
     $response->assertStatus(200);
     $response->assertInertia(fn ($page) => 
-        $page->component('Playground/Tools/WordCounter')
+        $page->component('Playground/Tools/Calculator')
              ->has('tool', fn ($toolData) => 
-                 $toolData->where('slug', 'word-counter')
+                 $toolData->where('slug', 'calculator')
                           ->etc()
              )
+             ->has('savedData')
     );
 });
 

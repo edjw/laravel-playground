@@ -7,6 +7,7 @@ import type { PlaygroundTool, BreadcrumbItem } from '@/types';
 
 interface Props {
     tool: PlaygroundTool;
+    savedData?: CalculatorResult[];
 }
 
 interface CalculatorResult {
@@ -40,8 +41,8 @@ const saveLabel = ref('');
 
 // Load saved results on mount
 onMounted(async () => {
-    if (props.tool.saved_data && Array.isArray(props.tool.saved_data)) {
-        savedResults.value = props.tool.saved_data;
+    if (props.savedData && Array.isArray(props.savedData)) {
+        savedResults.value = props.savedData;
     }
 });
 
@@ -56,7 +57,7 @@ watch(
             }, {
                 preserveState: true,
                 preserveScroll: true,
-                only: ['tool'],
+                only: ['savedData'],
             });
         } catch (error) {
             console.error('Failed to save results:', error);

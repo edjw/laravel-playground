@@ -32,8 +32,11 @@ final class PlaygroundController extends Controller
             abort(404);
         }
 
+        $userData = $tool->getOrCreateUserData(auth()->user());
+
         return Inertia::render("Playground/Tools/{$tool->component_name}", [
             'tool' => $tool,
+            'savedData' => $userData->saved_data,
         ]);
     }
 
@@ -49,7 +52,14 @@ final class PlaygroundController extends Controller
             'configuration' => ['nullable', 'array'],
         ]);
 
-        $tool->update($validated);
+        if (isset($validated['saved_data'])) {
+            $userData = $tool->getOrCreateUserData(auth()->user());
+            $userData->update(['saved_data' => $validated['saved_data']]);
+        }
+
+        if (isset($validated['configuration'])) {
+            $tool->update(['configuration' => $validated['configuration']]);
+        }
 
         // Always redirect back (Inertia standard)
         return redirect()->back();
@@ -65,6 +75,7 @@ final class PlaygroundController extends Controller
         $result = match ($tool->slug) {
             'todo-list' => $this->executeTodoList($request),
             'calculator' => $this->executeCalculator($request),
+            'text-transformer' => $this->executeTextTransformer($request),
             default => ['error' => 'Tool not implemented'],
         };
 

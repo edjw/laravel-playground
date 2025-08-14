@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -44,5 +45,18 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    
+    public function toolData(): HasMany
+    {
+        return $this->hasMany(UserToolData::class);
+    }
+    
+    public function getToolData(PlaygroundTool $tool): array
+    {
+        return $this->toolData()
+            ->where('playground_tool_id', $tool->id)
+            ->first()
+            ?->saved_data ?? [];
     }
 }

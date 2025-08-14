@@ -28,7 +28,6 @@ class PlaygroundToolFactory extends Factory
             'icon' => $this->faker->randomElement(['Beaker', 'Wrench', 'Cog', 'Code', 'Terminal', 'Zap']),
             'component_name' => str($name)->studly(),
             'configuration' => [],
-            'saved_data' => [],
             'is_active' => $this->faker->boolean(90), // 90% chance of being active
             'user_id' => User::factory(),
         ];
