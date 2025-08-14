@@ -16,5 +16,6 @@ class PlaygroundToolSeeder extends Seeder
     public function run(): void
     {
         // Create system tools (no user ownership needed)
-        // Tools have been removed as requested}
+        // Tools have been removed as requested
+    }
 }
