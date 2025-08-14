@@ -26,6 +26,11 @@ final class PlaygroundController extends Controller
 
     public function show(PlaygroundTool $tool): Response
     {
+        // Ensure tool is active
+        if (!$tool->is_active) {
+            abort(404);
+        }
+
         return Inertia::render("Playground/Tools/{$tool->component_name}", [
             'tool' => $tool,
         ]);
@@ -33,6 +38,11 @@ final class PlaygroundController extends Controller
 
     public function update(PlaygroundTool $tool, Request $request): JsonResponse
     {
+        // Ensure tool is active
+        if (!$tool->is_active) {
+            abort(404);
+        }
+
         $validated = $request->validate([
             'saved_data' => ['nullable', 'array'],
             'configuration' => ['nullable', 'array'],
@@ -45,6 +55,11 @@ final class PlaygroundController extends Controller
 
     public function execute(PlaygroundTool $tool, Request $request): JsonResponse
     {
+        // Ensure tool is active
+        if (!$tool->is_active) {
+            abort(404);
+        }
+
         $result = match ($tool->slug) {
             'word-counter' => $this->executeWordCounter($request),
             'json-formatter' => $this->executeJsonFormatter($request),

@@ -92,6 +92,16 @@ class PlaygroundToolFactory extends Factory
     }
 
     /**
+     * Create an active tool.
+     */
+    public function active(): static
+    {
+        return $this->state(fn (): array => [
+            'is_active' => true,
+        ]);
+    }
+
+    /**
      * Create an inactive tool.
      */
     public function inactive(): static

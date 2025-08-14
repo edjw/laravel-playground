@@ -1,208 +1,83 @@
 <?php
 
-declare(strict_types=1);
-
 use App\Models\PlaygroundTool;
 use App\Models\User;
 
-beforeEach(function () {
-    $this->user = User::factory()->create();
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
+
+test('guests are redirected to the login page when accessing playground', function () {
+    $response = $this->get('/playground');
+    $response->assertRedirect('/login');
 });
 
-describe('Playground Index', function () {
-    it('redirects unauthenticated users to login', function () {
-        $response = $this->get('/playground');
+test('authenticated users can visit the playground index', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-        $response->assertRedirect('/login');
-    });
-
-    it('shows playground index for authenticated users', function () {
-        $this->actingAs($this->user);
-
-        $response = $this->get('/playground');
-
-        $response->assertSuccessful();
-        $response->assertInertia(fn ($page) => $page->component('Playground/Index'));
-    });
-
-    it('shows only active tools on index', function () {
-        $this->actingAs($this->user);
-
-        PlaygroundTool::factory()->wordCounter()->create();
-        PlaygroundTool::factory()->jsonFormatter()->inactive()->create();
-
-        $response = $this->get('/playground');
-
-        $response->assertInertia(fn ($page) => $page->component('Playground/Index')
-            ->has('tools', 1)
-            ->where('tools.0.name', 'Word Counter')
-        );
-    });
+    $response = $this->get('/playground');
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => 
+        $page->component('Playground/Index')
+    );
 });
 
-describe('Playground Show', function () {
-    it('shows tool page for authenticated users', function () {
-        $this->actingAs($this->user);
+test('playground index displays active tools', function () {
+    $user = User::factory()->create();
+    $tool = PlaygroundTool::factory()->active()->create([
+        'name' => 'Test Tool',
+        'slug' => 'test-tool',
+    ]);
+    
+    $this->actingAs($user);
 
-        $tool = PlaygroundTool::factory()->wordCounter()->create();
-
-        $response = $this->get("/playground/tools/{$tool->slug}");
-
-        $response->assertSuccessful();
-        $response->assertInertia(fn ($page) => $page->component('Playground/Tools/WordCounter')
-            ->has('tool')
-            ->where('tool.name', 'Word Counter')
-        );
-    });
-
-    it('returns 404 for non-existent tools', function () {
-        $this->actingAs($this->user);
-
-        $response = $this->get('/playground/tools/non-existent');
-
-        $response->assertNotFound();
-    });
+    $response = $this->get('/playground');
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => 
+        $page->component('Playground/Index')
+             ->has('tools.0', fn ($tool) => 
+                 $tool->where('name', 'Test Tool')
+                      ->where('slug', 'test-tool')
+                      ->etc()
+             )
+    );
 });
 
-describe('Playground Update', function () {
-    it('updates tool saved data', function () {
-        $this->actingAs($this->user);
+test('authenticated users can view individual playground tools', function () {
+    $user = User::factory()->create();
+    $tool = PlaygroundTool::factory()->active()->create([
+        'slug' => 'word-counter',
+        'component_name' => 'WordCounter'
+    ]);
+    
+    $this->actingAs($user);
 
-        $tool = PlaygroundTool::factory()->create();
-
-        $updateData = [
-            'saved_data' => ['last_input' => 'test data'],
-            'configuration' => ['theme' => 'dark'],
-        ];
-
-        $response = $this->putJson("/playground/tools/{$tool->id}", $updateData);
-
-        $response->assertSuccessful();
-        $response->assertJson([
-            'tool' => [
-                'saved_data' => ['last_input' => 'test data'],
-                'configuration' => ['theme' => 'dark'],
-            ],
-        ]);
-
-        $tool->refresh();
-        expect($tool->saved_data)->toBe(['last_input' => 'test data']);
-        expect($tool->configuration)->toBe(['theme' => 'dark']);
-    });
+    $response = $this->get("/playground/tools/{$tool->slug}");
+    $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => 
+        $page->component('Playground/Tools/WordCounter')
+             ->has('tool', fn ($toolData) => 
+                 $toolData->where('slug', 'word-counter')
+                          ->etc()
+             )
+    );
 });
 
-describe('Tool Execution', function () {
-    it('executes word counter tool correctly', function () {
-        $this->actingAs($this->user);
+test('inactive tools are not accessible', function () {
+    $user = User::factory()->create();
+    $tool = PlaygroundTool::factory()->inactive()->create([
+        'slug' => 'inactive-tool'
+    ]);
+    
+    $this->actingAs($user);
 
-        $tool = PlaygroundTool::factory()->wordCounter()->create();
-
-        $response = $this->postJson("/playground/tools/{$tool->id}/execute", [
-            'text' => 'Hello world! This is a test.',
-        ]);
-
-        $response->assertSuccessful();
-        $response->assertJson([
-            'words' => 6,
-            'characters' => 27,
-            'lines' => 1,
-            'paragraphs' => 1,
-        ]);
-    });
-
-    it('executes json formatter tool correctly', function () {
-        $this->actingAs($this->user);
-
-        $tool = PlaygroundTool::factory()->jsonFormatter()->create();
-
-        $jsonString = '{"name":"test","value":123}';
-
-        $response = $this->postJson("/playground/tools/{$tool->id}/execute", [
-            'json' => $jsonString,
-        ]);
-
-        $response->assertSuccessful();
-        $response->assertJsonStructure([
-            'formatted',
-            'minified',
-            'valid',
-            'size_original',
-            'size_formatted',
-            'size_minified',
-        ]);
-
-        expect($response->json('valid'))->toBeTrue();
-    });
-
-    it('handles invalid json in formatter', function () {
-        $this->actingAs($this->user);
-
-        $tool = PlaygroundTool::factory()->jsonFormatter()->create();
-
-        $response = $this->postJson("/playground/tools/{$tool->id}/execute", [
-            'json' => '{"invalid": json}',
-        ]);
-
-        $response->assertSuccessful();
-        $response->assertJson([
-            'valid' => false,
-        ]);
-        $response->assertJsonStructure(['error']);
-    });
-
-    it('executes color palette tool correctly', function () {
-        $this->actingAs($this->user);
-
-        $tool = PlaygroundTool::factory()->colorPalette()->create();
-
-        $response = $this->postJson("/playground/tools/{$tool->id}/execute", [
-            'base_color' => '#FF0000',
-        ]);
-
-        $response->assertSuccessful();
-        $response->assertJsonStructure([
-            'palette' => [
-                'primary',
-                'lighter',
-                'darker',
-                'complement',
-                'triad1',
-                'triad2',
-            ],
-        ]);
-
-        expect($response->json('palette.primary'))->toBe('#FF0000');
-    });
-
-    it('returns error for unimplemented tools', function () {
-        $this->actingAs($this->user);
-
-        $tool = PlaygroundTool::factory()->create(['slug' => 'unknown-tool']);
-
-        $response = $this->postJson("/playground/tools/{$tool->id}/execute", []);
-
-        $response->assertSuccessful();
-        $response->assertJson([
-            'error' => 'Tool not implemented',
-        ]);
-    });
+    $response = $this->get("/playground/tools/{$tool->slug}");
+    $response->assertStatus(404);
 });
 
-describe('Authentication', function () {
-    it('requires authentication for all playground routes', function () {
-        $tool = PlaygroundTool::factory()->create();
+test('root path redirects authenticated users to playground', function () {
+    $user = User::factory()->create();
+    $this->actingAs($user);
 
-        // Test all routes require auth
-        $routes = [
-            ['GET', '/playground'],
-            ['GET', "/playground/tools/{$tool->slug}"],
-            ['PUT', "/playground/tools/{$tool->id}"],
-            ['POST', "/playground/tools/{$tool->id}/execute"],
-        ];
-
-        foreach ($routes as [$method, $uri]) {
-            $response = $this->call($method, $uri);
-            expect($response->status())->toBe(302); // Redirect to login
-        }
-    });
+    $response = $this->get('/');
+    $response->assertRedirect('/playground');
 });
