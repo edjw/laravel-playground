@@ -275,6 +275,70 @@ The playground includes Spatie Laravel Login Link for instant development access
 5. **Authentication**: Behind Laravel auth system
 6. **Extensibility**: Clear patterns for adding new tools
 
+## Laravel Cloud Deployment
+
+This playground is optimized for deployment on Laravel Cloud with Serverless Postgres.
+
+### Database Setup
+
+**Why Serverless Postgres?**
+
+- ✅ Auto-hibernation saves costs during idle periods
+- ✅ Scales automatically from 0.25 to 4 compute units
+- ✅ Perfect for demo/playground applications
+- ❌ SQLite not supported (ephemeral filesystem)
+
+**Recommended Configuration:**
+
+1. **Database Type**: Laravel Serverless Postgres
+2. **Compute Units**: 0.25 min, 1.0 max (cost-effective scaling)
+3. **Hibernation**: 300 seconds (5 minutes idle timeout)
+4. **Connection Pooling**: Enable pgbouncer for better performance
+
+### Deployment Configuration
+
+**Environment Variables:**
+
+- Laravel Cloud automatically injects database credentials
+- No manual DB_HOST, DB_USERNAME, DB_PASSWORD configuration needed
+- Local development continues to use SQLite
+
+**Deploy Commands:**
+
+```bash
+php artisan migrate --force
+php artisan db:seed --force
+```
+
+**Build Process:**
+
+- Wayfinder TypeScript generation happens during deploy phase (after database exists)
+- No build-time database dependency issues
+- Vite builds frontend assets automatically
+
+### Cost Optimization
+
+**Hibernation Benefits:**
+
+- Database sleeps after 5 minutes of inactivity
+- Wakes in ~300ms when accessed
+- Only pay for compute during active usage
+- Perfect for demo applications with sporadic traffic
+
+**Scaling Strategy:**
+
+- Starts at 0.25 compute units (minimal cost)
+- Auto-scales to 1.0 units under load
+- Can adjust max units based on usage patterns
+
+### Troubleshooting
+
+**Common Issues:**
+
+- **Wayfinder database errors**: Ensure deploy commands include `php artisan migrate --force` before any Wayfinder generation
+- **Connection limits**: Use connection pooling (`-pooler` hostname) for high-concurrency scenarios
+- **Hibernation delays**: First request after hibernation takes ~300ms (normal behavior)
+
 ## Future Enhancements
 
 - Artisan command for generating new tools
