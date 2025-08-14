@@ -421,6 +421,7 @@ php artisan make:playground-tool "Tool Name" --icon=Wrench --description="Brief 
 ```
 
 This command will:
+
 1. **Create the Vue component** with full template including save/load functionality
 2. **Create database entry** for the tool
 3. **Update the seeder** for deployment consistency
@@ -428,7 +429,8 @@ This command will:
 5. **Provide the route information** you need to add if using server-side processing
 
 **Manual steps (if not using the command):**
-1. Create the tool record in `PlaygroundToolSeeder` 
+
+1. Create the tool record in `PlaygroundToolSeeder`
 2. Create Vue component in `resources/js/pages/Playground/Tools/` (must match `component_name` field)
 3. Add controller logic in `PlaygroundController::execute()` method if needed
 4. Test the tool and write feature tests
@@ -443,6 +445,7 @@ php artisan remove:playground-tool tool-slug
 ```
 
 This command will:
+
 1. **Create migration** to remove tool from all databases (local and deployed)
 2. **Clean up seeder** to prevent recreation
 3. **Remove controller logic** if it exists
@@ -450,6 +453,27 @@ This command will:
 5. **Provide deployment instructions**
 
 **NEVER just delete from seeder - this leaves tools in deployed databases.**
+
+### Listing Tools
+
+**View all installed tools:**
+
+```bash
+php artisan list:playground-tools
+```
+
+**Available options:**
+
+- `--active` - Only show active tools
+- `--inactive` - Only show inactive tools  
+- `--user=ID` - Filter by user ID
+- `--json` - Output as JSON format
+
+**Example outputs:**
+
+- Shows table with tool details, status, and URLs
+- Provides summary statistics (active/inactive, system/user tools)
+- Lists clickable URLs for active tools
 
 ### Tool Structure
 
