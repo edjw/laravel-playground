@@ -26,20 +26,38 @@ class PlaygroundToolSeeder extends Seeder
             ]
         );
 
-        // Create the three demo playground tools
-        PlaygroundTool::factory()
-            ->wordCounter()
-            ->for($adminUser)
-            ->create();
+        // Playground tools will be added here automatically when created
 
-        PlaygroundTool::factory()
-            ->jsonFormatter()
-            ->for($adminUser)
-            ->create();
+        // Create the Todo List tool
+        PlaygroundTool::firstOrCreate(
+            ['slug' => 'todo-list'],
+            [
+                'name' => 'Todo List',
+                'slug' => 'todo-list',
+                'description' => 'Track tasks efficiently',
+                'icon' => 'CheckSquare',
+                'component_name' => 'TodoList',
+                'configuration' => [],
+                'saved_data' => [],
+                'is_active' => true,
+                'user_id' => $adminUser->id,
+            ]
+        );
 
-        PlaygroundTool::factory()
-            ->colorPalette()
-            ->for($adminUser)
-            ->create();
+        // Create the Calculator tool
+        PlaygroundTool::firstOrCreate(
+            ['slug' => 'calculator'],
+            [
+                'name' => 'Calculator',
+                'slug' => 'calculator',
+                'description' => 'A calculator with the ability to save and label results',
+                'icon' => 'Calculator',
+                'component_name' => 'Calculator',
+                'configuration' => [],
+                'saved_data' => [],
+                'is_active' => true,
+                'user_id' => $adminUser->id,
+            ]
+        );
     }
 }

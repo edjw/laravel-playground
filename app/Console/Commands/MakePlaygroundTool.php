@@ -94,9 +94,13 @@ class MakePlaygroundTool extends Command
             $this->updateController($slug, $componentName);
         }
 
+        // Update seeder for deployment
+        $this->updateSeeder($name, $slug, $componentName, $description, $icon);
+
         $this->info('Playground tool created successfully!');
         $this->line("• Vue component: {$componentPath}");
         $this->line("• Database entry created for: {$name}");
+        $this->line("• Seeder updated for deployment");
         $this->line("• URL: /playground/tools/{$slug}");
 
         return self::SUCCESS;
@@ -227,22 +231,80 @@ VUE;
         $controllerPath = app_path('Http/Controllers/PlaygroundController.php');
         $content = File::get($controllerPath);
 
-        // Add case to match statement
+        // Check if the case already exists
+        if (strpos($content, "'{$slug}' =>") !== false) {
+            $this->info('Controller case already exists, skipping...');
+            return;
+        }
+
+        // Add case to match statement - be more specific about the match
         $newCase = "            '{$slug}' => \$this->execute".$componentName.'($request),';
 
-        $content = str_replace(
-            "            default => ['error' => 'Tool not implemented'],",
-            $newCase."\n            default => ['error' => 'Tool not implemented'],",
-            $content
-        );
+        // Find the exact match statement and add our case before default
+        $pattern = '/(\$result = match \(\$tool->slug\) \{[^}]*?)(            default => \[\'error\' => \'Tool not implemented\'\],)/s';
+        
+        if (preg_match($pattern, $content)) {
+            $content = preg_replace(
+                $pattern,
+                "$1$newCase\n$2",
+                $content
+            );
+        }
 
-        // Add method to end of class (before the closing brace)
-        $newMethod = "\n    private function execute{$componentName}(Request \$request): array\n    {\n        \$input = \$request->input('input', '');\n        \n        // TODO: Implement your tool logic here\n        return [\n            'processed' => \$input,\n            'message' => 'Tool logic not yet implemented',\n        ];\n    }\n}";
+        // Check if the method already exists
+        if (strpos($content, "execute{$componentName}(") !== false) {
+            $this->info('Controller method already exists, skipping...');
+            File::put($controllerPath, $content); // Still save the case update
+            return;
+        }
 
-        $content = str_replace("}\n", $newMethod, $content);
+        // Add method before the last closing brace of the class
+        $newMethod = "\n    private function execute{$componentName}(Request \$request): array\n    {\n        \$input = \$request->input('input', '');\n        \n        // TODO: Implement your tool logic here\n        return [\n            'processed' => \$input,\n            'message' => 'Tool logic not yet implemented',\n        ];\n    }";
+
+        // Find the position of the last closing brace and insert before it
+        $lastBracePos = strrpos($content, '}');
+        if ($lastBracePos !== false) {
+            $content = substr_replace($content, $newMethod . "\n}", $lastBracePos, 1);
+        }
 
         File::put($controllerPath, $content);
 
         $this->info('Added placeholder method to PlaygroundController');
+    }
+
+    private function updateSeeder(string $name, string $slug, string $componentName, ?string $description, string $icon): void
+    {
+        $seederPath = database_path('seeders/PlaygroundToolSeeder.php');
+        $content = File::get($seederPath);
+
+        $newToolEntry = <<<PHP
+
+        // Create the {$name} tool
+        PlaygroundTool::firstOrCreate(
+            ['slug' => '{$slug}'],
+            [
+                'name' => '{$name}',
+                'slug' => '{$slug}',
+                'description' => '{$description}',
+                'icon' => '{$icon}',
+                'component_name' => '{$componentName}',
+                'configuration' => [],
+                'saved_data' => [],
+                'is_active' => true,
+                'user_id' => \$adminUser->id,
+            ]
+        );
+PHP;
+
+        // Insert the new tool before the closing brace and curly brace of the run method
+        $content = str_replace(
+            '    }' . "\n" . '}',
+            $newToolEntry . "\n" . '    }' . "\n" . '}',
+            $content
+        );
+
+        File::put($seederPath, $content);
+
+        $this->info('Updated PlaygroundToolSeeder for deployment');
     }
 }
