@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\PlaygroundTool;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -36,7 +37,7 @@ final class PlaygroundController extends Controller
         ]);
     }
 
-    public function update(PlaygroundTool $tool, Request $request): JsonResponse
+    public function update(PlaygroundTool $tool, Request $request)
     {
         // Ensure tool is active
         if (!$tool->is_active) {
@@ -50,7 +51,8 @@ final class PlaygroundController extends Controller
 
         $tool->update($validated);
 
-        return response()->json(['tool' => $tool]);
+        // Always redirect back (Inertia standard)
+        return redirect()->back();
     }
 
     public function execute(PlaygroundTool $tool, Request $request): JsonResponse
@@ -61,68 +63,159 @@ final class PlaygroundController extends Controller
         }
 
         $result = match ($tool->slug) {
-            'word-counter' => $this->executeWordCounter($request),
-            'json-formatter' => $this->executeJsonFormatter($request),
-            'color-palette' => $this->executeColorPalette($request),
+            'todo-list' => $this->executeTodoList($request),
+            'calculator' => $this->executeCalculator($request),
             default => ['error' => 'Tool not implemented'],
         };
 
         return response()->json($result);
     }
 
-    private function executeWordCounter(Request $request): array
+    private function executeTodoList(Request $request): array
     {
-        $text = $request->input('text', '');
-
-        return [
-            'words' => str_word_count($text),
-            'characters' => strlen($text),
-            'characters_no_spaces' => strlen(str_replace(' ', '', $text)),
-            'lines' => substr_count($text, "\n") + 1,
-            'paragraphs' => count(array_filter(explode("\n\n", $text), fn ($p) => trim($p) !== '')),
-        ];
-    }
-
-    private function executeJsonFormatter(Request $request): array
-    {
-        try {
-            $jsonString = $request->input('json', '{}');
-            $json = json_decode($jsonString, true, 512, JSON_THROW_ON_ERROR);
-
-            return [
-                'formatted' => json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
-                'minified' => json_encode($json, JSON_UNESCAPED_SLASHES),
-                'valid' => true,
-                'size_original' => strlen($jsonString),
-                'size_formatted' => strlen(json_encode($json, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)),
-                'size_minified' => strlen(json_encode($json, JSON_UNESCAPED_SLASHES)),
-            ];
-        } catch (\JsonException $e) {
-            return [
-                'error' => $e->getMessage(),
-                'valid' => false,
-            ];
+        $action = $request->input('action', 'get');
+        $todos = $request->input('todos', []);
+        
+        // This method is actually not used by the frontend anymore
+        // The frontend uses the update() method directly to save to saved_data
+        // But keeping this for potential API usage
+        
+        switch ($action) {
+            case 'add':
+                $newTodo = [
+                    'id' => uniqid(),
+                    'text' => $request->input('text', ''),
+                    'completed' => false,
+                    'priority' => $request->input('priority', 'medium'),
+                    'category' => $request->input('category', ''),
+                    'dueDate' => $request->input('dueDate'),
+                    'created_at' => now()->toISOString(),
+                ];
+                $todos[] = $newTodo;
+                break;
+                
+            case 'toggle':
+                $todoId = $request->input('todoId');
+                foreach ($todos as &$todo) {
+                    if ($todo['id'] === $todoId) {
+                        $todo['completed'] = !$todo['completed'];
+                        break;
+                    }
+                }
+                break;
+                
+            case 'delete':
+                $todoId = $request->input('todoId');
+                $todos = array_filter($todos, fn($todo) => $todo['id'] !== $todoId);
+                $todos = array_values($todos);
+                break;
+                
+            case 'clear_completed':
+                $todos = array_filter($todos, fn($todo) => !$todo['completed']);
+                $todos = array_values($todos);
+                break;
         }
-    }
-
-    private function executeColorPalette(Request $request): array
-    {
-        $baseColor = $request->input('base_color', '#3B82F6');
-
-        // Simple color palette generation (in a real app, you'd use a proper color theory library)
-        $hex = ltrim($baseColor, '#');
-        $rgb = sscanf($hex, '%02x%02x%02x');
-        [$r, $g, $b] = $rgb;
-
+        
+        $total = count($todos);
+        $completed = count(array_filter($todos, fn($todo) => $todo['completed']));
+        
         return [
-            'palette' => [
-                'primary' => $baseColor,
-                'lighter' => sprintf('#%02x%02x%02x', min(255, $r + 40), min(255, $g + 40), min(255, $b + 40)),
-                'darker' => sprintf('#%02x%02x%02x', max(0, $r - 40), max(0, $g - 40), max(0, $b - 40)),
-                'complement' => sprintf('#%02x%02x%02x', 255 - $r, 255 - $g, 255 - $b),
-                'triad1' => sprintf('#%02x%02x%02x', $g, $b, $r),
-                'triad2' => sprintf('#%02x%02x%02x', $b, $r, $g),
+            'todos' => $todos,
+            'stats' => [
+                'total' => $total,
+                'completed' => $completed,
+                'remaining' => $total - $completed,
             ],
         ];
+    }
+
+    private function executeCalculator(Request $request): array
+    {
+        $operation = $request->input('operation');
+        $num1 = $request->input('num1', 0);
+        $num2 = $request->input('num2', 0);
+        $expression = $request->input('expression', '');
+        
+        if ($expression) {
+            // Handle complex expression evaluation
+            try {
+                // Simple expression evaluator (for security, we only allow basic math operations)
+                $expression = preg_replace('/[^0-9+\-*\/().\s]/', '', $expression);
+                $result = eval("return $expression;");
+                
+                return [
+                    'result' => $result,
+                    'expression' => $expression,
+                    'formatted' => "$expression = $result"
+                ];
+            } catch (Exception $e) {
+                return [
+                    'error' => 'Invalid expression',
+                    'expression' => $expression
+                ];
+            }
+        }
+        
+        // Handle basic operations
+        switch ($operation) {
+            case 'add':
+                $result = $num1 + $num2;
+                break;
+            case 'subtract':
+                $result = $num1 - $num2;
+                break;
+            case 'multiply':
+                $result = $num1 * $num2;
+                break;
+            case 'divide':
+                if ($num2 == 0) {
+                    return ['error' => 'Cannot divide by zero'];
+                }
+                $result = $num1 / $num2;
+                break;
+            case 'power':
+                $result = pow($num1, $num2);
+                break;
+            case 'sqrt':
+                if ($num1 < 0) {
+                    return ['error' => 'Cannot calculate square root of negative number'];
+                }
+                $result = sqrt($num1);
+                break;
+            case 'percentage':
+                $result = ($num1 / 100) * $num2;
+                break;
+            default:
+                return ['error' => 'Unknown operation'];
+        }
+        
+        return [
+            'result' => $result,
+            'operation' => $operation,
+            'operands' => [$num1, $num2],
+            'formatted' => $this->formatOperation($operation, $num1, $num2, $result)
+        ];
+    }
+    
+    private function formatOperation(string $operation, float $num1, float $num2, float $result): string
+    {
+        switch ($operation) {
+            case 'add':
+                return "$num1 + $num2 = $result";
+            case 'subtract':
+                return "$num1 - $num2 = $result";
+            case 'multiply':
+                return "$num1 × $num2 = $result";
+            case 'divide':
+                return "$num1 ÷ $num2 = $result";
+            case 'power':
+                return "$num1^$num2 = $result";
+            case 'sqrt':
+                return "√$num1 = $result";
+            case 'percentage':
+                return "$num1% of $num2 = $result";
+            default:
+                return "$num1 $operation $num2 = $result";
+        }
     }
 }
