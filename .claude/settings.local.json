@@ -19,7 +19,8 @@
       "Bash(php artisan config:clear:*)",
       "mcp__laravel-boost__tinker",
       "Bash(php artisan:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebSearch"
     ]
   },
   "enableAllProjectMcpServers": true,
