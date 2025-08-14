@@ -20,7 +20,9 @@
       "mcp__laravel-boost__tinker",
       "Bash(php artisan:*)",
       "Bash(grep:*)",
-      "WebSearch"
+      "WebSearch",
+      "mcp__laravel-boost__get-absolute-url",
+      "mcp__laravel-boost__database-schema"
     ]
   },
   "enableAllProjectMcpServers": true,
