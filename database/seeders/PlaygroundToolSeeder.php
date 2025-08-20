@@ -17,5 +17,20 @@ class PlaygroundToolSeeder extends Seeder
     {
         // Create system tools (no user ownership needed)
         // Tools have been removed as requested
+
+        // Create the Workout Tracker tool
+        PlaygroundTool::firstOrCreate(
+            ['slug' => 'workout-tracker'],
+            [
+                'name' => 'Workout Tracker',
+                'slug' => 'workout-tracker',
+                'description' => 'Mobile-first personal fitness tracking with custom exercises and session recording',
+                'icon' => 'Dumbbell',
+                'component_name' => 'WorkoutTracker',
+                'configuration' => [],
+                'is_active' => true,
+                'user_id' => null, // System tool
+            ]
+        );
     }
 }

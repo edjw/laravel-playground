@@ -74,4 +74,40 @@ final class PlaygroundController extends Controller
 
         // No tools currently implemented
         return response()->json(['error' => 'Tool not implemented']);
-    }}
+    }
+    public function processWorkoutTracker(Request $request, PlaygroundTool $tool)
+    {
+        // Ensure tool is active
+        if (!$tool->is_active) {
+            abort(404);
+        }
+        
+        $input = $request->input('input', '');
+        
+        try {
+            // TODO: Implement your server-side tool logic here
+            // Example processing
+            $processed = strtoupper($input); // Replace with your logic
+            
+            $result = [
+                'input' => $input,
+                'processed' => $processed,
+                'message' => 'Processing completed successfully',
+                'timestamp' => now()->toISOString(),
+            ];
+            
+            // Pure Inertia: redirect back to tool page with result as prop
+            return redirect()->route('playground.show', $tool)
+                ->with('processResult', $result);
+                
+        } catch (Exception $e) {
+            $errorResult = [
+                'error' => 'Processing failed: ' . $e->getMessage(),
+                'input' => $input,
+            ];
+            
+            return redirect()->route('playground.show', $tool)
+                ->with('processResult', $errorResult);
+        }
+    }
+}
