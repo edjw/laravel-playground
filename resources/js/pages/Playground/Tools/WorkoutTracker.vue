@@ -10,6 +10,7 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
 import {
     Dialog,
     DialogClose,
@@ -20,13 +21,17 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWorkoutData } from '@/composables/useWorkoutData';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { cn } from '@/lib/utils';
 import type { BreadcrumbItem, PlaygroundTool } from '@/types';
 import type { WorkoutData } from '@/types/workout';
 import { Head } from '@inertiajs/vue3';
-import { Edit, Plus, Trash2 } from 'lucide-vue-next';
+import type { DateValue } from '@internationalized/date';
+import { DateFormatter, getLocalTimeZone, parseDate } from '@internationalized/date';
+import { CalendarIcon, Edit, Plus, Trash2 } from 'lucide-vue-next';
 import { onMounted, ref } from 'vue';
 
 interface Props {
@@ -80,6 +85,12 @@ const exerciseForm = ref({
     name: '',
     type: 'weight' as 'weight' | 'bodyweight',
 });
+
+// Date picker
+const df = new DateFormatter('en-GB', {
+    dateStyle: 'long',
+});
+const editingSessionDate = ref<DateValue>();
 
 // Load data on mount
 onMounted(() => {
@@ -204,14 +215,21 @@ const getLastSession = () => {
 // Edit session functionality
 const startEditSession = (session: WorkoutSession) => {
     editingSession.value = { ...session };
+    try {
+        editingSessionDate.value = parseDate(session.date);
+        console.log('Parsed date:', session.date, '->', editingSessionDate.value);
+    } catch (error) {
+        console.error('Error parsing date:', session.date, error);
+    }
 };
 
 const cancelEditSession = () => {
     editingSession.value = null;
+    editingSessionDate.value = undefined;
 };
 
 const saveEditSession = () => {
-    if (!editingSession.value) return;
+    if (!editingSession.value || !editingSessionDate.value) return;
 
     // Filter out empty sets (no reps)
     const validSets = editingSession.value.sets.filter((set) => set.reps && set.reps > 0);
@@ -220,9 +238,11 @@ const saveEditSession = () => {
         ...editingSession.value,
         sets: validSets,
         notes: editingSession.value.notes?.trim() || undefined,
+        date: editingSessionDate.value.toString(),
     });
 
     editingSession.value = null;
+    editingSessionDate.value = undefined;
 };
 
 const confirmDeleteSession = (sessionId: string) => {
@@ -313,12 +333,6 @@ const cancelDeleteExercise = () => {
     <AppLayout :breadcrumbs="breadcrumbs">
         <!-- Mobile-first container with proper touch targets -->
         <div class="mx-auto mt-4 max-w-4xl space-y-6 px-4 sm:px-6">
-            <!-- Tool Header -->
-            <div class="space-y-2 text-center">
-                <h1 class="text-2xl font-bold tracking-tight sm:text-3xl">{{ tool.name }}</h1>
-                <p v-if="tool.description" class="text-sm text-muted-foreground sm:text-base">{{ tool.description }}</p>
-            </div>
-
             <!-- Auto-save status indicator -->
             <div v-if="isSaving || saveError" class="fixed top-4 right-4 z-50">
                 <div v-if="isSaving" class="rounded-lg bg-blue-100 px-3 py-2 text-sm text-blue-800 shadow-sm">Saving...</div>
@@ -328,7 +342,7 @@ const cancelDeleteExercise = () => {
             </div>
 
             <!-- Exercise Selection - Full view when no exercise selected -->
-            <div v-if="!selectedExercise" class="rounded-lg border bg-white p-4 shadow-sm sm:p-6">
+            <div v-if="!selectedExercise && exercises && exercises.length > 0" class="rounded-lg border bg-white p-4 shadow-sm sm:p-6">
                 <h2 class="mb-4 text-lg font-semibold">Select Exercise</h2>
 
                 <div class="flex items-center gap-2">
@@ -630,10 +644,9 @@ const cancelDeleteExercise = () => {
                                         class="rounded-lg border p-3"
                                     >
                                         <!-- Session Header with Edit/Delete buttons -->
-                                        <div class="mb-2 flex items-start justify-between">
+                                        <div class="mb-2 flex items-center justify-between">
                                             <span class="font-medium">{{ new Date(session.date).toLocaleDateString() }}</span>
                                             <div class="flex items-center gap-2">
-                                                <span class="text-sm text-gray-600">{{ session.sets.length }} sets</span>
                                                 <button
                                                     @click="startEditSession(session)"
                                                     class="flex h-8 min-h-[44px] w-8 min-w-[44px] items-center justify-center rounded-md text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800"
@@ -671,12 +684,35 @@ const cancelDeleteExercise = () => {
             </div>
 
             <!-- Edit Session Dialog -->
-            <div v-if="editingSession" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+            <div v-if="editingSession" class="bg-opacity-50 fixed inset-0 z-[60] flex items-center justify-center bg-black p-4">
                 <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-white p-6">
                     <h3 class="mb-4 text-lg font-semibold">Edit Session</h3>
-                    <p class="mb-4 text-sm text-gray-600">{{ new Date(editingSession.date).toLocaleDateString() }}</p>
 
                     <form @submit.prevent="saveEditSession" class="space-y-4">
+                        <!-- Date Editing -->
+                        <div>
+                            <label class="mb-2 block text-sm font-medium text-gray-700">Date</label>
+                            <Popover>
+                                <PopoverTrigger as-child>
+                                    <Button
+                                        variant="outline"
+                                        :class="
+                                            cn(
+                                                'h-11 min-h-[44px] w-full justify-start text-left font-normal',
+                                                !editingSessionDate && 'text-muted-foreground',
+                                            )
+                                        "
+                                    >
+                                        <CalendarIcon class="mr-2 h-4 w-4" />
+                                        {{ editingSessionDate ? df.format(editingSessionDate.toDate(getLocalTimeZone())) : 'Pick a date' }}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent class="z-[70] w-auto p-0">
+                                    <Calendar v-model="editingSessionDate" initial-focus />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+
                         <!-- Sets Editing -->
                         <div class="space-y-4">
                             <div v-for="(set, index) in editingSession.sets" :key="index" class="flex items-end gap-3">
@@ -760,7 +796,6 @@ const cancelDeleteExercise = () => {
 
             <!-- Empty State -->
             <div v-if="!exercises || exercises.length === 0" class="py-12 text-center">
-                <div class="mb-4 text-6xl">💪</div>
                 <h3 class="mb-2 text-lg font-semibold">Ready to Track Your Workouts?</h3>
                 <p class="mb-6 text-muted-foreground">Start by adding your first exercise.</p>
                 <Dialog>
@@ -812,7 +847,7 @@ const cancelDeleteExercise = () => {
 
         <!-- Delete Session Confirmation Dialog -->
         <AlertDialog v-model:open="showDeleteDialog">
-            <AlertDialogContent>
+            <AlertDialogContent class="z-[60]">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete Workout Session?</AlertDialogTitle>
                     <AlertDialogDescription>
@@ -828,7 +863,7 @@ const cancelDeleteExercise = () => {
 
         <!-- Delete Exercise Confirmation Dialog -->
         <AlertDialog v-model:open="showDeleteExerciseDialog">
-            <AlertDialogContent>
+            <AlertDialogContent class="z-[60]">
                 <AlertDialogHeader>
                     <AlertDialogTitle>Delete Exercise?</AlertDialogTitle>
                     <AlertDialogDescription>
