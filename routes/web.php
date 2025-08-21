@@ -15,10 +15,10 @@ Route::middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/playground/tools/{tool:slug}', [PlaygroundController::class, 'show'])
         ->name('playground.show');
 
-    Route::put('/playground/tools/{tool}', [PlaygroundController::class, 'update'])
+    Route::put('/playground/tools/{tool:slug}', [PlaygroundController::class, 'update'])
         ->name('playground.update');
 
-    Route::post('/playground/tools/{tool}/execute', [PlaygroundController::class, 'execute'])
+    Route::post('/playground/tools/{tool:slug}/execute', [PlaygroundController::class, 'execute'])
         ->name('playground.execute');
 });
 

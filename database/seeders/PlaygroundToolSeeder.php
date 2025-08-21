@@ -24,7 +24,7 @@ class PlaygroundToolSeeder extends Seeder
             [
                 'name' => 'Workout Tracker',
                 'slug' => 'workout-tracker',
-                'description' => 'Mobile-first personal fitness tracking with custom exercises and session recording',
+                'description' => '',
                 'icon' => 'Dumbbell',
                 'component_name' => 'WorkoutTracker',
                 'configuration' => [],
