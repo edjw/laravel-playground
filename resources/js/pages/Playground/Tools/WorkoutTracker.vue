@@ -698,12 +698,12 @@ const cancelDeleteExercise = () => {
                                         variant="outline"
                                         :class="
                                             cn(
-                                                'h-11 min-h-[44px] w-full justify-start text-left font-normal',
+                                                'h-12 min-h-[48px] w-full touch-manipulation justify-start px-4 py-3 text-left font-normal',
                                                 !editingSessionDate && 'text-muted-foreground',
                                             )
                                         "
                                     >
-                                        <CalendarIcon class="mr-2 h-4 w-4" />
+                                        <CalendarIcon class="mr-2 h-5 w-5 flex-shrink-0" />
                                         {{ editingSessionDate ? df.format(editingSessionDate.toDate(getLocalTimeZone())) : 'Pick a date' }}
                                     </Button>
                                 </PopoverTrigger>
