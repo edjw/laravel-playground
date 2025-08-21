@@ -10,7 +10,16 @@ import {
     AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useWorkoutData } from '@/composables/useWorkoutData';
 import AppLayout from '@/layouts/AppLayout.vue';
@@ -333,7 +342,7 @@ const cancelDeleteExercise = () => {
                             </SelectItem>
                         </SelectContent>
                     </Select>
-                    
+
                     <Dialog>
                         <DialogTrigger as-child>
                             <Button
@@ -401,7 +410,7 @@ const cancelDeleteExercise = () => {
                                 </SelectItem>
                             </SelectContent>
                         </Select>
-                        
+
                         <Dialog>
                             <DialogTrigger as-child>
                                 <Button
@@ -462,71 +471,71 @@ const cancelDeleteExercise = () => {
                     <div class="flex items-center justify-between">
                         <h2 class="text-lg font-semibold">{{ selectedExercise.name }}</h2>
                         <div class="flex items-center gap-1">
-                        <Dialog>
-                            <DialogTrigger as-child>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    class="flex h-9 min-h-[44px] w-9 min-w-[44px] items-center justify-center p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
-                                    @click="startEditExercise(selectedExercise)"
-                                >
-                                    <Edit :size="18" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent class="max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] p-0 sm:max-w-[425px]">
-                                <DialogHeader class="p-6 pb-0">
-                                    <DialogTitle>Edit Exercise</DialogTitle>
-                                    <DialogDescription> Make changes to your exercise here. </DialogDescription>
-                                </DialogHeader>
-                                <div class="grid gap-4 overflow-y-auto px-6 py-4" v-if="editingExercise">
-                                    <form @submit.prevent="saveEditExercise" class="space-y-4">
-                                        <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700">Exercise Name</label>
-                                            <input
-                                                v-model="editingExercise.name"
-                                                type="text"
-                                                class="h-11 min-h-[44px] w-full rounded-md border px-3 py-2 outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                                placeholder="e.g. Push-ups, Squats, Deadlift"
-                                                required
-                                            />
-                                        </div>
+                            <Dialog>
+                                <DialogTrigger as-child>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        class="flex h-9 min-h-[44px] w-9 min-w-[44px] items-center justify-center p-0 text-blue-600 hover:bg-blue-50 hover:text-blue-800"
+                                        @click="startEditExercise(selectedExercise)"
+                                    >
+                                        <Edit :size="18" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent class="max-h-[90dvh] grid-rows-[auto_minmax(0,1fr)_auto] p-0 sm:max-w-[425px]">
+                                    <DialogHeader class="p-6 pb-0">
+                                        <DialogTitle>Edit Exercise</DialogTitle>
+                                        <DialogDescription> Make changes to your exercise here. </DialogDescription>
+                                    </DialogHeader>
+                                    <div class="grid gap-4 overflow-y-auto px-6 py-4" v-if="editingExercise">
+                                        <form @submit.prevent="saveEditExercise" class="space-y-4">
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-gray-700">Exercise Name</label>
+                                                <input
+                                                    v-model="editingExercise.name"
+                                                    type="text"
+                                                    class="h-11 min-h-[44px] w-full rounded-md border px-3 py-2 outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                    placeholder="e.g. Push-ups, Squats, Deadlift"
+                                                    required
+                                                />
+                                            </div>
 
-                                        <div>
-                                            <label class="mb-1 block text-sm font-medium text-gray-700">Exercise Type</label>
-                                            <select
-                                                v-model="editingExercise.type"
-                                                class="h-11 min-h-[44px] w-full rounded-md border px-3 py-2 outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
-                                            >
-                                                <option value="weight">Weights</option>
-                                                <option value="bodyweight">Bodyweight</option>
-                                            </select>
-                                        </div>
-                                    </form>
-                                </div>
-                                <DialogFooter class="p-6 pt-0">
-                                    <DialogClose as-child>
-                                        <Button type="button" variant="outline" @click="editingExercise = null"> Cancel </Button>
-                                    </DialogClose>
-                                    <DialogClose as-child>
-                                        <Button type="button" @click="saveEditExercise" :disabled="!editingExercise?.name.trim()"> Save Changes </Button>
-                                    </DialogClose>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <button
-                            @click="confirmDeleteExercise(selectedExercise.id)"
-                            class="flex h-9 min-h-[44px] w-9 min-w-[44px] items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 hover:text-red-800"
-                            title="Delete Exercise"
-                        >
-                            <Trash2 :size="18" />
-                        </button>
+                                            <div>
+                                                <label class="mb-1 block text-sm font-medium text-gray-700">Exercise Type</label>
+                                                <select
+                                                    v-model="editingExercise.type"
+                                                    class="h-11 min-h-[44px] w-full rounded-md border px-3 py-2 outline-hidden focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+                                                >
+                                                    <option value="weight">Weights</option>
+                                                    <option value="bodyweight">Bodyweight</option>
+                                                </select>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <DialogFooter class="p-6 pt-0">
+                                        <DialogClose as-child>
+                                            <Button type="button" variant="outline" @click="editingExercise = null"> Cancel </Button>
+                                        </DialogClose>
+                                        <DialogClose as-child>
+                                            <Button type="button" @click="saveEditExercise" :disabled="!editingExercise?.name.trim()">
+                                                Save Changes
+                                            </Button>
+                                        </DialogClose>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                            <button
+                                @click="confirmDeleteExercise(selectedExercise.id)"
+                                class="flex h-9 min-h-[44px] w-9 min-w-[44px] items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 hover:text-red-800"
+                                title="Delete Exercise"
+                            >
+                                <Trash2 :size="18" />
+                            </button>
                         </div>
                     </div>
-                    
+
                     <!-- Previous session info - now clearly underneath -->
-                    <div class="mt-2 text-sm text-gray-600">
-                        <span class="font-medium">Last:</span> {{ getLastSession() }}
-                    </div>
+                    <div class="mt-2 text-sm text-gray-600"><span class="font-medium">Last:</span> {{ getLastSession() }}</div>
                 </div>
 
                 <!-- Sets Recording -->
@@ -582,9 +591,7 @@ const cancelDeleteExercise = () => {
 
                 <!-- Session Notes -->
                 <details class="mt-4">
-                    <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">
-                        Add notes about this session
-                    </summary>
+                    <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-gray-900">Add notes about this session</summary>
                     <div class="mt-2">
                         <textarea
                             v-model="currentSession.notes"
@@ -617,52 +624,51 @@ const cancelDeleteExercise = () => {
                             </DialogHeader>
                             <div class="grid gap-4 overflow-y-auto px-6 py-4">
                                 <div class="max-h-[60vh] space-y-3 overflow-y-auto">
-                                <div
-                                    v-for="session in getHistoryForExercise(selectedExercise.id, 1, 10).sessions"
-                                    :key="session.id"
-                                    class="rounded-lg border p-3"
-                                >
-                                    <!-- Session Header with Edit/Delete buttons -->
-                                    <div class="mb-2 flex items-start justify-between">
-                                        <span class="font-medium">{{ new Date(session.date).toLocaleDateString() }}</span>
-                                        <div class="flex items-center gap-2">
-                                            <span class="text-sm text-gray-600">{{ session.sets.length }} sets</span>
-                                            <button
-                                                @click="startEditSession(session)"
-                                                class="flex h-8 min-h-[44px] w-8 min-w-[44px] items-center justify-center rounded-md text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800"
-                                                title="Edit Session"
-                                            >
-                                                <Edit :size="16" />
-                                            </button>
-                                            <button
-                                                @click="confirmDeleteSession(session.id)"
-                                                class="flex h-8 min-h-[44px] w-8 min-w-[44px] items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 hover:text-red-800"
-                                                title="Delete Session"
-                                            >
-                                                <Trash2 :size="16" />
-                                            </button>
+                                    <div
+                                        v-for="session in getHistoryForExercise(selectedExercise.id, 1, 10).sessions"
+                                        :key="session.id"
+                                        class="rounded-lg border p-3"
+                                    >
+                                        <!-- Session Header with Edit/Delete buttons -->
+                                        <div class="mb-2 flex items-start justify-between">
+                                            <span class="font-medium">{{ new Date(session.date).toLocaleDateString() }}</span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="text-sm text-gray-600">{{ session.sets.length }} sets</span>
+                                                <button
+                                                    @click="startEditSession(session)"
+                                                    class="flex h-8 min-h-[44px] w-8 min-w-[44px] items-center justify-center rounded-md text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-800"
+                                                    title="Edit Session"
+                                                >
+                                                    <Edit :size="16" />
+                                                </button>
+                                                <button
+                                                    @click="confirmDeleteSession(session.id)"
+                                                    class="flex h-8 min-h-[44px] w-8 min-w-[44px] items-center justify-center rounded-md text-red-600 transition-colors hover:bg-red-50 hover:text-red-800"
+                                                    title="Delete Session"
+                                                >
+                                                    <Trash2 :size="16" />
+                                                </button>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <!-- Session Details -->
-                                    <div class="space-y-1 text-sm">
-                                        <div v-for="(set, index) in session.sets" :key="index" class="flex justify-between">
-                                            <span>Set {{ index + 1 }}:</span>
-                                            <span>
-                                                <template v-if="selectedExercise.type === 'weight'"> {{ set.weight }}kg × </template>
-                                                {{ set.reps }} reps
-                                            </span>
+                                        <!-- Session Details -->
+                                        <div class="space-y-1 text-sm">
+                                            <div v-for="(set, index) in session.sets" :key="index" class="flex justify-between">
+                                                <span>Set {{ index + 1 }}:</span>
+                                                <span>
+                                                    <template v-if="selectedExercise.type === 'weight'"> {{ set.weight }}kg × </template>
+                                                    {{ set.reps }} reps
+                                                </span>
+                                            </div>
                                         </div>
+                                        <div v-if="session.notes" class="mt-2 text-sm text-gray-600 italic">"{{ session.notes }}"</div>
                                     </div>
-                                    <div v-if="session.notes" class="mt-2 text-sm text-gray-600 italic">"{{ session.notes }}"</div>
-                                </div>
                                 </div>
                             </div>
                         </DialogContent>
                     </Dialog>
                 </div>
             </div>
-
 
             <!-- Edit Session Dialog -->
             <div v-if="editingSession" class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
