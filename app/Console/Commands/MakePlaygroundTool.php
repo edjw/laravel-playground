@@ -102,11 +102,11 @@ class MakePlaygroundTool extends Command
         $this->info('Playground tool created successfully!');
         $this->line("• Vue component: {$componentPath}");
         $this->line("• Database entry created for: {$name}");
-        $this->line("• Seeder updated for deployment");
+        $this->line('• Seeder updated for deployment');
         $this->line("• URL: /playground/tools/{$slug}");
-        
+
         if ($addedController) {
-            $this->line("");
+            $this->line('');
             $this->line("<comment>Note: For server-side processing, you'll need to add this route to web.php:</comment>");
             $this->line("<info>Route::post('/playground/tools/{$slug}/process', [PlaygroundController::class, 'process{$componentName}'])->name('playground.process.{$slug}');</info>");
         }
@@ -478,8 +478,9 @@ VUE;
         $content = File::get($controllerPath);
 
         // Check if the case already exists
-        if (strpos($content, "'{$slug}' =>") !== false) {
+        if (str_contains($content, "'{$slug}' =>")) {
             $this->info('Controller case already exists, skipping...');
+
             return;
         }
 
@@ -488,7 +489,7 @@ VUE;
 
         // Find the exact match statement and add our case before default
         $pattern = '/(\$result = match \(\$tool->slug\) \{[^}]*?)(            default => \[\'error\' => \'Tool not implemented\'\],)/s';
-        
+
         if (preg_match($pattern, $content)) {
             $content = preg_replace(
                 $pattern,
@@ -498,9 +499,10 @@ VUE;
         }
 
         // Check if the method already exists
-        if (strpos($content, "execute{$componentName}(") !== false) {
+        if (str_contains($content, "execute{$componentName}(")) {
             $this->info('Controller method already exists, skipping...');
             File::put($controllerPath, $content); // Still save the case update
+
             return;
         }
 
@@ -510,7 +512,7 @@ VUE;
         // Find the position of the last closing brace and insert before it
         $lastBracePos = strrpos($content, '}');
         if ($lastBracePos !== false) {
-            $content = substr_replace($content, $newMethod . "\n}", $lastBracePos, 1);
+            $content = substr_replace($content, $newMethod."\n}", $lastBracePos, 1);
         }
 
         File::put($controllerPath, $content);
@@ -543,8 +545,8 @@ PHP;
 
         // Insert the new tool before the closing brace and curly brace of the run method
         $content = str_replace(
-            '    }' . "\n" . '}',
-            $newToolEntry . "\n" . '    }' . "\n" . '}',
+            '    }'."\n".'}',
+            $newToolEntry."\n".'    }'."\n".'}',
             $content
         );
 

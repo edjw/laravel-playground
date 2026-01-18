@@ -6,7 +6,7 @@ namespace App\Console\Commands;
 
 use App\Models\PlaygroundTool;
 use Illuminate\Console\Command;
-use Illuminate\Support\Carbon;
+use Illuminate\Database\Eloquent\Collection;
 
 class ListPlaygroundTools extends Command
 {
@@ -54,6 +54,7 @@ class ListPlaygroundTools extends Command
             } else {
                 $this->info('No playground tools found.');
             }
+
             return self::SUCCESS;
         }
 
@@ -66,7 +67,7 @@ class ListPlaygroundTools extends Command
         return self::SUCCESS;
     }
 
-    private function outputJson($tools): void
+    private function outputJson(Collection $tools): void
     {
         $data = $tools->map(function (PlaygroundTool $tool) {
             return [
@@ -90,7 +91,7 @@ class ListPlaygroundTools extends Command
         $this->info(json_encode($data, JSON_PRETTY_PRINT));
     }
 
-    private function outputTable($tools): void
+    private function outputTable(Collection $tools): void
     {
         $this->info("Found {$tools->count()} playground tool(s):");
         $this->newLine();
@@ -120,13 +121,13 @@ class ListPlaygroundTools extends Command
         $userTools = $tools->where('user_id', '!=', null)->count();
 
         $this->newLine();
-        $this->info("Summary:");
+        $this->info('Summary:');
         $this->info("• Active: {$activeCount}, Inactive: {$inactiveCount}");
         $this->info("• System tools: {$systemTools}, User tools: {$userTools}");
 
         if ($tools->isNotEmpty()) {
             $this->newLine();
-            $this->info("Tool URLs:");
+            $this->info('Tool URLs:');
             foreach ($tools->where('is_active', true) as $tool) {
                 $this->info("• {$tool->name}: /playground/tools/{$tool->slug}");
             }

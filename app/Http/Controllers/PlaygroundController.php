@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Models\PlaygroundTool;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -27,10 +28,7 @@ final class PlaygroundController extends Controller
 
     public function show(PlaygroundTool $tool): Response
     {
-        // Ensure tool is active
-        if (!$tool->is_active) {
-            abort(404);
-        }
+        $this->ensureToolIsActive($tool);
 
         $userData = $tool->getOrCreateUserData(auth()->user());
 
@@ -40,12 +38,9 @@ final class PlaygroundController extends Controller
         ]);
     }
 
-    public function update(PlaygroundTool $tool, Request $request)
+    public function update(PlaygroundTool $tool, Request $request): RedirectResponse
     {
-        // Ensure tool is active
-        if (!$tool->is_active) {
-            abort(404);
-        }
+        $this->ensureToolIsActive($tool);
 
         $validated = $request->validate([
             'saved_data' => ['nullable', 'array'],
@@ -61,53 +56,52 @@ final class PlaygroundController extends Controller
             $tool->update(['configuration' => $validated['configuration']]);
         }
 
-        // Always redirect back (Inertia standard)
         return redirect()->back();
     }
 
     public function execute(PlaygroundTool $tool, Request $request): JsonResponse
     {
-        // Ensure tool is active
-        if (!$tool->is_active) {
-            abort(404);
-        }
+        $this->ensureToolIsActive($tool);
 
-        // No tools currently implemented
         return response()->json(['error' => 'Tool not implemented']);
     }
-    public function processWorkoutTracker(Request $request, PlaygroundTool $tool)
+
+    public function processWorkoutTracker(Request $request, PlaygroundTool $tool): RedirectResponse
     {
-        // Ensure tool is active
-        if (!$tool->is_active) {
-            abort(404);
-        }
-        
+        $this->ensureToolIsActive($tool);
+
         $input = $request->input('input', '');
-        
+
         try {
             // TODO: Implement your server-side tool logic here
             // Example processing
             $processed = strtoupper($input); // Replace with your logic
-            
+
             $result = [
                 'input' => $input,
                 'processed' => $processed,
                 'message' => 'Processing completed successfully',
                 'timestamp' => now()->toISOString(),
             ];
-            
-            // Pure Inertia: redirect back to tool page with result as prop
+
             return redirect()->route('playground.show', $tool)
                 ->with('processResult', $result);
-                
+
         } catch (Exception $e) {
             $errorResult = [
-                'error' => 'Processing failed: ' . $e->getMessage(),
+                'error' => 'Processing failed: '.$e->getMessage(),
                 'input' => $input,
             ];
-            
+
             return redirect()->route('playground.show', $tool)
                 ->with('processResult', $errorResult);
+        }
+    }
+
+    private function ensureToolIsActive(PlaygroundTool $tool): void
+    {
+        if (! $tool->is_active) {
+            abort(404);
         }
     }
 }
