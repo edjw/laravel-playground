@@ -43,23 +43,25 @@ final class PlaygroundTool extends Model
     {
         $query->where('is_active', true);
     }
-    
+
     public function userData(): HasMany
     {
         return $this->hasMany(UserToolData::class, 'playground_tool_id');
     }
-    
+
     public function userDataFor(User $user): ?UserToolData
     {
-        return $this->userData()->where('user_id', $user->id)->first();
+        return $this->userData()
+            ->where('user_id', $user->id)
+            ->first();
     }
-    
+
     public function getOrCreateUserData(User $user): UserToolData
     {
         return $this->userDataFor($user) ?? UserToolData::create([
             'user_id' => $user->id,
             'playground_tool_id' => $this->id,
-            'saved_data' => []
+            'saved_data' => [],
         ]);
     }
 }

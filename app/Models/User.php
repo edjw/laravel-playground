@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -8,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable
+final class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
@@ -46,17 +48,18 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    
+
     public function toolData(): HasMany
     {
         return $this->hasMany(UserToolData::class);
     }
-    
+
     public function getToolData(PlaygroundTool $tool): array
     {
-        return $this->toolData()
+        $userData = $this->toolData()
             ->where('playground_tool_id', $tool->id)
-            ->first()
-            ?->saved_data ?? [];
+            ->first();
+
+        return $userData?->saved_data ?? [];
     }
 }
